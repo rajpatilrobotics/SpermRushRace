@@ -1,18 +1,29 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path, { dirname } from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
 import glsl from "vite-plugin-glsl";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Safe optional import for Replit's runtime error overlay
+let runtimeErrorOverlay = null;
+try {
+  // Dynamically import the plugin only if available (inside Replit)
+  runtimeErrorOverlay = require("@replit/vite-plugin-runtime-error-modal");
+  console.log("✅ Loaded Replit runtime error overlay plugin");
+} catch (err) {
+  console.log(
+    "⚙️ Skipping Replit plugin (not found, probably running outside Replit)",
+  );
+}
+
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
-    glsl(), // Add GLSL shader support
+    ...(runtimeErrorOverlay ? [runtimeErrorOverlay()] : []), // Add only if available
+    glsl(), // GLSL shader support
   ],
   resolve: {
     alias: {
@@ -25,6 +36,6 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
-  // Add support for large models and audio files
+  // Include assets like 3D models and audio
   assetsInclude: ["**/*.gltf", "**/*.glb", "**/*.mp3", "**/*.ogg", "**/*.wav"],
 });
